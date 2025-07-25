@@ -59,6 +59,18 @@ router.get("/", protectRoute, async (req, res) => {
   }
 });
 
+router.get("/user", protectRoute, async (req, res) => {
+  try {
+    const books = await Book.find({ user: req.user._id }).sort({
+      createdAt: -1,
+    }); // user from the middleware verifications and sort by createdAt in descending order
+    res.status(200).json(books);
+  } catch (error) {
+    console.log("Error getting user books:", error);
+    res.status(500).json({ error: "Error getting user books" });
+  }
+});
+
 router.delete("/:id", protectRoute, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);

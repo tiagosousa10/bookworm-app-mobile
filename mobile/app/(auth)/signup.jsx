@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import styles from "../../assets/styles/signup.styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,8 +21,17 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { isLoading } = useAuthStore();
-  const handleSignUp = () => {};
+  const { isLoading, user, register, token } = useAuthStore();
+
+  const handleSignUp = async () => {
+    const result = await register(username, email, password);
+    console.log("🚀 ~ handleSignUp ~ result:", result);
+
+    // if (!result.success) Alert.alert("Error signing up", result.error);
+  };
+
+  console.log(user);
+  console.log(token);
 
   return (
     <KeyboardAvoidingView

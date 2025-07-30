@@ -25,13 +25,13 @@ const Signup = () => {
 
   const handleSignUp = async () => {
     const result = await register(username, email, password);
-    console.log("🚀 ~ handleSignUp ~ result:", result);
+    // console.log("🚀 ~ handleSignUp ~ result:", result);
 
     // if (!result.success) Alert.alert("Error signing up", result.error);
   };
 
-  console.log(user);
-  console.log(token);
+  // console.log(user);
+  // console.log(token);
 
   return (
     <KeyboardAvoidingView

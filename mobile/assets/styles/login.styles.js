@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
   illustrationImage: {
     width: width * 0.75,
     height: width * 0.75,
+    marginLeft: 30,
   },
   card: {
     backgroundColor: COLORS.cardBackground,
@@ -34,7 +35,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 2,
     borderColor: COLORS.border,
-    marginTop: -24,
+    marginBottom: 44,
   },
   header: {
     alignItems: "center",

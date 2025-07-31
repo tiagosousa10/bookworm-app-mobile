@@ -4,10 +4,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TextInput,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import styles from "../../assets/styles/create.styles";
+import COLORS from "../../constants/colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const Create = () => {
   const [title, setTitle] = useState("");
@@ -38,6 +41,28 @@ const Create = () => {
             <Text style={styles.subtitle}>
               Share your favorite reads with others
             </Text>
+          </View>
+
+          <View style={styles.form}>
+            {/* book title */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Book Title</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="book-outline"
+                  size={20}
+                  color={COLORS.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter book title"
+                  placeholderTextColor={COLORS.placeholderText}
+                  value={title}
+                  onChangeText={(text) => setTitle(text)}
+                />
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>

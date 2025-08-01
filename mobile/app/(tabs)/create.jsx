@@ -6,12 +6,17 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Image,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import styles from "../../assets/styles/create.styles";
 import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 
 const Create = () => {
   const [title, setTitle] = useState("");
@@ -22,7 +27,53 @@ const Create = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const pickImage = async () => {};
+
+  const pickImage = async () => {
+    try {
+      //request permission if needed
+      if (Platform.OS !== "web") {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission denied",
+            "You need to grant access to your media library to upload an image"
+          );
+          return;
+        }
+      }
+
+      //launch image library
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5, //lower quality to reduce file size
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+
+        //if base64 is provided, use it
+        if (result.assets[0].base64) {
+          setImageBase64(result.assets[0].base64);
+        } else {
+          //otherwise, convert it to base64
+          const base64 = await FileSystem.readAsStringAsync(
+            result.assets[0].uri,
+            {
+              encoding: FileSystem.EncodingType.Base64,
+            }
+          );
+          setImageBase64(base64);
+        }
+      }
+    } catch (error) {
+      console.log("Error picking image:", error);
+      Alert.alert("Error picking image", error.message);
+    }
+  };
 
   const handleSubmit = async () => {};
 
@@ -92,6 +143,26 @@ const Create = () => {
             </View>
 
             {/* image */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Book Image</Text>
+              <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+                {image ? (
+                  <Image source={{ uri: image }} style={styles.previewImage} />
+                ) : (
+                  <View style={styles.placeholderContainer}>
+                    <Ionicons
+                      name="image-outline"
+                      size={40}
+                      color={COLORS.textSecondary}
+                      style={styles.inputIcon}
+                    />
+                    <Text style={styles.imagePlaceholder}>
+                      Tap to select image
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>

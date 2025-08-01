@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
@@ -163,6 +164,36 @@ const Create = () => {
                 )}
               </TouchableOpacity>
             </View>
+
+            {/* caption */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Caption</Text>
+              <TextInput
+                style={styles.textArea}
+                placeholder="Write your review or thoughts about this book..."
+                placeholderTextColor={COLORS.placeholderText}
+                value={caption}
+                onChangeText={(text) => setCaption(text)}
+                multiline
+              />
+            </View>
+
+            {/* share button */}
+            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={20}
+                    color={COLORS.white}
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={styles.buttonText}>Share</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

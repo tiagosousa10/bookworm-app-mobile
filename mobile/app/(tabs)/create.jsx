@@ -15,19 +15,22 @@ import { useRouter } from "expo-router";
 import styles from "../../assets/styles/create.styles";
 import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuthStore } from "../../store/authStore";
 
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import { API_URL } from "../../constants/api";
 
 const Create = () => {
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
-  const [rating, setRating] = useState("");
+  const [rating, setRating] = useState(3);
   const [image, setImage] = useState(""); // to display the selected image
   const [imageBase64, setImageBase64] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const { token } = useAuthStore();
 
   const pickImage = async () => {
     try {
@@ -76,7 +79,62 @@ const Create = () => {
     }
   };
 
-  const handleSubmit = async () => {};
+  const handleSubmit = async () => {
+    if (!title || !caption || !imageBase64 || !rating) {
+      Alert.alert("Error", "All fields are required");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      //get file extension form URI or default to jpeg
+      const uriParts = image.split(".");
+      const fileType = uriParts[uriParts.length - 1] || "jpeg";
+      const imageType = fileType
+        ? `image/${fileType.toLowerCase()}`
+        : "image/jpeg";
+      const imageDataUrl = `data:${imageType};base64,${imageBase64}`;
+
+      //create book recommendation
+      const response = await fetch(`${API_URL}/books`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          caption,
+          rating: rating.toString(),
+          image: imageDataUrl,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Something went wrong");
+
+      Alert.alert(
+        "Success",
+        "Your book recommendation has been added",
+        data.message
+      );
+
+      //reset form
+      setTitle("");
+      setCaption("");
+      setRating(3);
+      setImage(null);
+      setImageBase64(null);
+
+      router.push("/");
+    } catch (error) {
+      console.log("Error adding book recommendation:", error);
+      Alert.alert("Error adding book recommendation", error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderRatingPicker = () => {
     const stars = [];
@@ -109,7 +167,7 @@ const Create = () => {
         style={styles.scrollViewStyle}
       >
         <View style={styles.card}>
-          {/* header  */}
+          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.title}>Add Book Recommendation</Text>
             <Text style={styles.subtitle}>
@@ -118,7 +176,7 @@ const Create = () => {
           </View>
 
           <View style={styles.form}>
-            {/* book title */}
+            {/* BOOK TITLE */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Book Title</Text>
               <View style={styles.inputContainer}>
@@ -133,17 +191,18 @@ const Create = () => {
                   placeholder="Enter book title"
                   placeholderTextColor={COLORS.placeholderText}
                   value={title}
-                  onChangeText={(text) => setTitle(text)}
+                  onChangeText={setTitle}
                 />
               </View>
             </View>
-            {/* rating */}
+
+            {/* RATING */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Your Rating</Text>
               {renderRatingPicker()}
             </View>
 
-            {/* image */}
+            {/* IMAGE */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Book Image</Text>
               <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
@@ -155,9 +214,8 @@ const Create = () => {
                       name="image-outline"
                       size={40}
                       color={COLORS.textSecondary}
-                      style={styles.inputIcon}
                     />
-                    <Text style={styles.imagePlaceholder}>
+                    <Text style={styles.placeholderText}>
                       Tap to select image
                     </Text>
                   </View>
@@ -165,7 +223,7 @@ const Create = () => {
               </TouchableOpacity>
             </View>
 
-            {/* caption */}
+            {/* CAPTION */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Caption</Text>
               <TextInput
@@ -173,13 +231,17 @@ const Create = () => {
                 placeholder="Write your review or thoughts about this book..."
                 placeholderTextColor={COLORS.placeholderText}
                 value={caption}
-                onChangeText={(text) => setCaption(text)}
+                onChangeText={setCaption}
                 multiline
               />
             </View>
 
-            {/* share button */}
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            {/* SUBMIT BUTTON */}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <ActivityIndicator color={COLORS.white} />
               ) : (

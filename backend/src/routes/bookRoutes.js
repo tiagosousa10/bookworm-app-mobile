@@ -9,7 +9,9 @@ router.post("/", protectRoute, async (req, res) => {
   try {
     const { title, caption, image, rating } = req.body;
     if (!title || !caption || !image || !rating) {
-      return res.status(400).json({ error: "Missing fields" });
+      return res
+        .status(400)
+        .json({ error: "Missing fields: " + error.message });
     }
 
     //upload image to cloudinary
@@ -28,8 +30,8 @@ router.post("/", protectRoute, async (req, res) => {
 
     res.status(201).json(newBook);
   } catch (error) {
-    console.log("Error creating book:", error);
-    res.status(500).json({ error: "Error creating book" });
+    console.log("Error creating book:", error.message);
+    res.status(500).json({ error: "Error creating book: " + error.message });
   }
 });
 

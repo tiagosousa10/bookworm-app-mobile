@@ -1,102 +1,108 @@
+import { useState } from "react";
 import {
   View,
   Text,
-  KeyboardAvoidingView,
   Platform,
+  KeyboardAvoidingView,
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Image,
   Alert,
+  Image,
   ActivityIndicator,
 } from "react-native";
-import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import styles from "../../assets/styles/create.styles";
-import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { API_URL } from "../../constants/api";
 
-const Create = () => {
+export default function Create() {
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [rating, setRating] = useState(3);
-  const [image, setImage] = useState(""); // to display the selected image
-  const [imageBase64, setImageBase64] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [image, setImage] = useState(null); // to display the selected image
+  const [imageBase64, setImageBase64] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const { token } = useAuthStore();
 
+  console.log(token);
+
   const pickImage = async () => {
     try {
-      //request permission if needed
+      // request permission if needed
       if (Platform.OS !== "web") {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
+
         if (status !== "granted") {
           Alert.alert(
-            "Permission denied",
-            "You need to grant access to your media library to upload an image"
+            "Permission Denied",
+            "We need camera roll permissions to upload an image"
           );
           return;
         }
       }
 
-      //launch image library
+      // launch image library
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 0.5, //lower quality to reduce file size
+        quality: 0.1, // lower quality for smaller base64
         base64: true,
       });
 
       if (!result.canceled) {
         setImage(result.assets[0].uri);
 
-        //if base64 is provided, use it
+        // if base64 is provided, use it
+
         if (result.assets[0].base64) {
           setImageBase64(result.assets[0].base64);
         } else {
-          //otherwise, convert it to base64
+          // otherwise, convert to base64
           const base64 = await FileSystem.readAsStringAsync(
             result.assets[0].uri,
             {
               encoding: FileSystem.EncodingType.Base64,
             }
           );
+
           setImageBase64(base64);
         }
       }
     } catch (error) {
-      console.log("Error picking image:", error);
-      Alert.alert("Error picking image", error.message);
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "There was a problem selecting your image");
     }
   };
 
   const handleSubmit = async () => {
     if (!title || !caption || !imageBase64 || !rating) {
-      Alert.alert("Error", "All fields are required");
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
 
-      //get file extension form URI or default to jpeg
+      // get file extension from URI or default to jpeg
       const uriParts = image.split(".");
-      const fileType = uriParts[uriParts.length - 1] || "jpeg";
+      const fileType = uriParts[uriParts.length - 1];
       const imageType = fileType
         ? `image/${fileType.toLowerCase()}`
         : "image/jpeg";
+
       const imageDataUrl = `data:${imageType};base64,${imageBase64}`;
 
-      //create book recommendation
+      // create the post
       const response = await fetch(`${API_URL}/books`, {
         method: "POST",
         headers: {
@@ -110,32 +116,36 @@ const Create = () => {
           image: imageDataUrl,
         }),
       });
+      const text = await response.text(); // lê como texto primeiro
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Something went wrong");
+      try {
+        const data = JSON.parse(text);
+        if (!response.ok)
+          throw new Error(data.message || "Something went wrong");
+      } catch (err) {
+        console.error("Raw response:", text); // ← isto vai mostrar o HTML ou erro exato
+        throw new Error("Invalid JSON response from server");
+      }
 
-      Alert.alert(
-        "Success",
-        "Your book recommendation has been added",
-        data.message
-      );
-
-      //reset form
+      Alert.alert("Success", "Your book recommendation has been posted!");
+      // reset the form
       setTitle("");
       setCaption("");
       setRating(3);
       setImage(null);
       setImageBase64(null);
 
+      // navigate to the home screen
       router.push("/");
     } catch (error) {
-      console.log("Error adding book recommendation:", error);
-      Alert.alert("Error adding book recommendation", error.message);
+      console.error("Error creating post:", error);
+      Alert.alert("Error", error.message || "Something went wrong");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  // render the rating picker
   const renderRatingPicker = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -153,7 +163,6 @@ const Create = () => {
         </TouchableOpacity>
       );
     }
-
     return <View style={styles.ratingContainer}>{stars}</View>;
   };
 
@@ -236,13 +245,13 @@ const Create = () => {
               />
             </View>
 
-            {/* SUBMIT BUTTON */}
+            {/*{/* SUBMIT  BUTTON */}
             <TouchableOpacity
               style={styles.button}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? (
+              {loading ? (
                 <ActivityIndicator color={COLORS.white} />
               ) : (
                 <>
@@ -261,6 +270,4 @@ const Create = () => {
       </ScrollView>
     </KeyboardAvoidingView>
   );
-};
-
-export default Create;
+}

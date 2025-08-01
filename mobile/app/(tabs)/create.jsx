@@ -5,6 +5,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
@@ -24,6 +25,27 @@ const Create = () => {
   const pickImage = async () => {};
 
   const handleSubmit = async () => {};
+
+  const renderRatingPicker = () => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          onPress={() => setRating(i)}
+          style={styles.starButton}
+        >
+          <Ionicons
+            name={i <= rating ? "star" : "star-outline"}
+            size={32}
+            color={i <= rating ? "#f4b400" : COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+      );
+    }
+
+    return <View style={styles.ratingContainer}>{stars}</View>;
+  };
 
   return (
     <KeyboardAvoidingView
@@ -63,6 +85,13 @@ const Create = () => {
                 />
               </View>
             </View>
+            {/* rating */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Your Rating</Text>
+              {renderRatingPicker()}
+            </View>
+
+            {/* image */}
           </View>
         </View>
       </ScrollView>

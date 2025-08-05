@@ -1,4 +1,10 @@
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
@@ -8,6 +14,12 @@ import { API_URL } from "../../constants/api";
 import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { formatPublishDate } from "../../lib/utils";
+import Loader from "../../components/Loader";
+
+// to simulate loading when scrolling
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 const Home = () => {
   const { token } = useAuthStore();
@@ -22,7 +34,7 @@ const Home = () => {
       if (refresh) setRefreshing(true);
       else if (pageNum === 1) setLoading(true);
 
-      const response = await fetch(`${API_URL}/books?page=${pageNum}&limit=5`, {
+      const response = await fetch(`${API_URL}/books?page=${pageNum}&limit=1`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -34,7 +46,19 @@ const Home = () => {
         throw new Error(data.message || "Something went wrong fetching books");
 
       //todo: fix laters -> unique keys
-      setBooks((prevBooks) => [...prevBooks, ...data.books]);
+      // setBooks((prevBooks) => [...prevBooks, ...data.books]);
+
+      // remove duplicates
+      const uniqueBooks =
+        refresh || pageNum === 1
+          ? data.books
+          : Array.from(
+              new Set([...books, ...data.books].map((book) => book._id))
+            ).map((id) =>
+              [...books, ...data.books].find((book) => book._id === id)
+            );
+
+      setBooks(uniqueBooks);
 
       setHasMore(pageNum < data.totalPages);
 
@@ -51,7 +75,12 @@ const Home = () => {
     fetchBooks();
   }, []);
 
-  const handleLoadMore = async () => {};
+  const handleLoadMore = async () => {
+    if (hasMore && !loading && !refreshing) {
+      await sleep(1000);
+      await fetchBooks(page + 1);
+    }
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.bookCard}>
@@ -101,6 +130,8 @@ const Home = () => {
     return stars;
   };
 
+  if (loading) return <Loader />;
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -109,6 +140,38 @@ const Home = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.1}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>BookWorm 🐛</Text>
+            <Text style={styles.headerSubtitle}>
+              Discover great reads from the community
+            </Text>
+          </View>
+        }
+        ListFooterComponent={
+          hasMore && books.length > 0 ? (
+            <ActivityIndicator
+              style={styles.footerLoader}
+              size="small"
+              color={COLORS.primary}
+            />
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name="book-outline"
+              size={60}
+              color={COLORS.textSecondary}
+            />
+            <Text style={styles.emptyText}>No recommendations yet</Text>
+            <Text style={styles.emptySubtext}>
+              Be the first to share a book!
+            </Text>
+          </View>
+        }
       />
     </View>
   );

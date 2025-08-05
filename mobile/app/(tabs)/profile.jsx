@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import { API_URL } from "../../constants/api";
 import { useAuthStore } from "../../store/authStore";
 import styles from "../../assets/styles/profile.styles";
+import ProfileHeader from "../../components/ProfileHeader";
+import LogoutButton from "../../components/LogoutButton";
 
 const Profile = () => {
   const [books, setBooks] = useState();

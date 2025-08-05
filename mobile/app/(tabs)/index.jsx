@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
@@ -66,8 +67,10 @@ const Home = () => {
     } catch (error) {
       console.log("Error fetching books:", error);
     } finally {
-      if (refresh) setRefreshing(false);
-      else setLoading(false);
+      if (refresh) {
+        // await sleep(800);
+        setRefreshing(false);
+      } else setLoading(false);
     }
   };
 
@@ -75,6 +78,7 @@ const Home = () => {
     fetchBooks();
   }, []);
 
+  // infinite scroll
   const handleLoadMore = async () => {
     if (hasMore && !loading && !refreshing) {
       await sleep(1000);
@@ -140,6 +144,14 @@ const Home = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchBooks(1, true)}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.1}
         ListHeaderComponent={

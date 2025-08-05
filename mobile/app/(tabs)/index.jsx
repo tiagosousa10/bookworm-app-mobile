@@ -5,6 +5,8 @@ import { useAuthStore } from "../../store/authStore";
 
 import styles from "../../assets/styles/home.styles";
 import { API_URL } from "../../constants/api";
+import COLORS from "../../constants/colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const Home = () => {
   const { token } = useAuthStore();
@@ -69,8 +71,33 @@ const Home = () => {
           contentFit="cover"
         />
       </View>
+
+      <View style={styles.bookDetails}>
+        <Text style={styles.bookTitle}>{item.title}</Text>
+        <View style={styles.ratingContainer}>
+          {renderRatingStars(item.rating)}
+        </View>
+        <Text style={styles.caption}>{item.caption}</Text>
+      </View>
     </View>
   );
+
+  const renderRatingStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Ionicons
+          key={i}
+          name={i <= rating ? "star" : "star-outline"}
+          size={24}
+          color={i <= rating ? "#f4b400" : COLORS.textSecondary}
+          style={{ marginRight: 2 }}
+        />
+      );
+    }
+
+    return stars;
+  };
 
   return (
     <View style={styles.container}>

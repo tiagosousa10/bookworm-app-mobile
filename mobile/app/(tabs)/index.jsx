@@ -7,6 +7,7 @@ import styles from "../../assets/styles/home.styles";
 import { API_URL } from "../../constants/api";
 import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import { formatPublishDate } from "../../lib/utils";
 
 const Home = () => {
   const { token } = useAuthStore();
@@ -78,6 +79,7 @@ const Home = () => {
           {renderRatingStars(item.rating)}
         </View>
         <Text style={styles.caption}>{item.caption}</Text>
+        <Text style={styles.date}>{formatPublishDate(item.createdAt)}</Text>
       </View>
     </View>
   );

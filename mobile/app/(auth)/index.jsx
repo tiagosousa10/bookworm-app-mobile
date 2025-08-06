@@ -21,14 +21,15 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, isLoading, user } = useAuthStore();
-  console.log("🚀 ~ Login ~ user:", user);
+  const { login, isLoading, isCheckingAuth } = useAuthStore();
 
   const handleLogin = async () => {
     const result = await login(email, password);
 
     if (!result.success) Alert.alert("Error logging in", result.error);
   };
+
+  if (isCheckingAuth) return null;
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}

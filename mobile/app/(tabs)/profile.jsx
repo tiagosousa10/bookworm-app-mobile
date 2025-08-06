@@ -46,6 +46,43 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteBook = async (bookId) => {
+    try {
+      const response = await fetch(`${API_URL}/books/${bookId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong deleting book");
+      }
+
+      setBooks(books.filter((book) => book._id !== bookId));
+      Alert.alert("Success", "Book deleted successfully");
+    } catch (error) {
+      console.log("Error deleting book:", error.message);
+      Alert.alert("Error", "Something went wrong deleting book");
+    }
+  };
+
+  const confirmDelete = (bookId) => {
+    Alert.alert(
+      "Delete Recommendation",
+      "Are you sure you want to delete this recommendation?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeleteBook(bookId),
+        },
+      ]
+    );
+  };
   const renderBookItem = ({ item }) => (
     <View style={styles.bookItem}>
       <Image source={item.image} style={styles.bookImage} />
@@ -54,7 +91,18 @@ const Profile = () => {
         <View style={styles.ratingContainer}>
           {renderItemStars(item.rating)}
         </View>
+        <Text style={styles.bookCaption} numberOfLines={2}>
+          {item.caption}
+        </Text>
+        <Text>{new Date(item.createdAt).toLocaleDateString()}</Text>
       </View>
+
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => confirmDelete(item._id)}
+      >
+        <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -65,12 +113,14 @@ const Profile = () => {
         <Ionicons
           key={i}
           name={i <= rating ? "star" : "star-outline"}
-          size={24}
+          size={14}
           color={i <= rating ? "#f4b400" : COLORS.textSecondary}
           style={{ marginRight: 2 }}
         />
       );
     }
+
+    return stars;
   };
 
   useEffect(() => {

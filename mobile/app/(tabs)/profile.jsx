@@ -1,4 +1,12 @@
-import { View, Text, Alert, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Alert,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { API_URL } from "../../constants/api";
@@ -9,12 +17,14 @@ import LogoutButton from "../../components/LogoutButton";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../../constants/colors";
 import { Image } from "expo-image";
+import { sleep } from ".";
+import Loader from "../../components/Loader";
 
 const Profile = () => {
   const [books, setBooks] = useState();
-  console.log("🚀 ~ Profile ~ books:", books);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteBookId, setDeleteBookId] = useState(null);
 
   const router = useRouter();
 
@@ -46,8 +56,13 @@ const Profile = () => {
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const handleDeleteBook = async (bookId) => {
     try {
+      setDeleteBookId(bookId);
       const response = await fetch(`${API_URL}/books/${bookId}`, {
         method: "DELETE",
         headers: {
@@ -66,6 +81,8 @@ const Profile = () => {
     } catch (error) {
       console.log("Error deleting book:", error.message);
       Alert.alert("Error", "Something went wrong deleting book");
+    } finally {
+      setDeleteBookId(null);
     }
   };
 
@@ -83,6 +100,7 @@ const Profile = () => {
       ]
     );
   };
+
   const renderBookItem = ({ item }) => (
     <View style={styles.bookItem}>
       <Image source={item.image} style={styles.bookImage} />
@@ -101,7 +119,11 @@ const Profile = () => {
         style={styles.deleteButton}
         onPress={() => confirmDelete(item._id)}
       >
-        <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
+        {deleteBookId === item._id ? (
+          <ActivityIndicator size="small" color={COLORS.primary} />
+        ) : (
+          <Ionicons name="trash-outline" size={24} color={COLORS.primary} />
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -123,9 +145,15 @@ const Profile = () => {
     return stars;
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await sleep(500);
+    await fetchData();
+
+    setRefreshing(false);
+  };
+
+  if (isLoading && !refreshing) return <Loader />;
 
   return (
     <View style={styles.container}>
@@ -143,6 +171,14 @@ const Profile = () => {
         renderItem={renderBookItem}
         key={(item) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
         contentContainerStyle={styles.booksList}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

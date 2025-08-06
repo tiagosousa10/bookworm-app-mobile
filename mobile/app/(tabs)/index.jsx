@@ -18,7 +18,7 @@ import { formatPublishDate } from "../../lib/utils";
 import Loader from "../../components/Loader";
 
 // to simulate loading when scrolling
-const sleep = (ms) => {
+export const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
